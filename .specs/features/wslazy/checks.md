@@ -217,3 +217,5 @@ Status: verified
 - **Abandoned:** nenhum caminho de implementação abandonado.
 
 - **Revisão independente, rodada 1:** 34/40 comprovados; C15, C16, C30, C31, C32 e C35 exigiram provas adicionais. Os mesmos métodos receberam assertions mais fortes: processo-controle no mesmo grupo, refresh após identidade obsoleta, stderr isolado, TUI instalada em PTY, shell real e erros via ambas as entradas. 44 testes passam; aguardando rodada 2.
+
+- **Conclusão:** rodada 2 independente PASS, 40/40 checks e 44 testes em `e88db7f0`; completion gate exit 0. Nenhum requisito ou proof foi removido ou enfraquecido.
