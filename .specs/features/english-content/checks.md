@@ -56,4 +56,4 @@ The verifier also reads the changed source and README for language consistency; 
 
 Approximately 80 KB of source, tests and README / 4 = 20k tokens, plus 5k for the amendment and review. Under the default 150k budget: one builder, followed by an independent verifier. Base: `2db2fd88ad24246053903eadc2e9031957991ff9`. Build tooling on this host remains under `/tmp/wslazy-build-tools`; run proofs with that directory in PYTHONPATH when building the installation fixture.
 
-Status: implemented; 44 tests passed and C3/C5/C6/C7 assertion commands passed. Independent verification pending.
+Status: verified; independent PASS for C1–C7 at c1f3daf1c7c92e3050633bfe397fe886e6db0eb5. All 44 tests and documentation/repository assertion commands passed. Completion gate returned 0 errors and 0 warnings.
