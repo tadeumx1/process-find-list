@@ -11,12 +11,13 @@ import termios
 import time
 
 
-def exercise_terminal():
+def exercise_terminal(command=None, env=None, cwd=None):
     master, slave = pty.openpty()
     fcntl.ioctl(slave,termios.TIOCSWINSZ,struct.pack('HHHH',30,120,0,0))
     before=termios.tcgetattr(slave)
-    proc=subprocess.Popen([sys.executable,'-m','wslazy'],stdin=slave,stdout=slave,stderr=slave,
-                          env={**os.environ,'TERM':'xterm-256color'},start_new_session=True)
+    proc=subprocess.Popen(command or [sys.executable,'-m','wslazy'],stdin=slave,stdout=slave,stderr=slave,
+                          env={**(os.environ if env is None else env),'TERM':'xterm-256color'},
+                          cwd=cwd,start_new_session=True)
     output=bytearray()
     def drain(seconds):
         end=time.monotonic()+seconds

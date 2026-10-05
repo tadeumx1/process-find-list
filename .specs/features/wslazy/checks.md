@@ -215,3 +215,5 @@ Status: verified
 - **Boundary:** C1–C40 implementados; 40 proofs individuais e 4 regressões adicionais passam com `PYTHONPATH=/tmp/wslazy-build-tools python3 -m unittest discover -v`. O diretório temporário contém somente ferramentas de build/teste (`pip`, `setuptools`, `wheel`); não é necessário para rodar WSLazy.
 - **Settled mid-build:** nenhuma mudança nos requisitos aprovados. Os avisos do validador sobre seletores são uma limitação da detecção de seletores `unittest`; cada proof usa o nome completo de um método específico.
 - **Abandoned:** nenhum caminho de implementação abandonado.
+
+- **Revisão independente, rodada 1:** 34/40 comprovados; C15, C16, C30, C31, C32 e C35 exigiram provas adicionais. Os mesmos métodos receberam assertions mais fortes: processo-controle no mesmo grupo, refresh após identidade obsoleta, stderr isolado, TUI instalada em PTY, shell real e erros via ambas as entradas. 44 testes passam; aguardando rodada 2.

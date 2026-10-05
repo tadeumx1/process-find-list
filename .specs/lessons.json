@@ -1,0 +1,117 @@
+{
+  "schema": 1,
+  "promote_threshold": 2,
+  "window_days": 45,
+  "quarantine_threshold": 2,
+  "next_id": 7,
+  "lessons": [
+    {
+      "id": "L-001",
+      "key": "ac_gap::use a live control process in the same process group to prove that a signal reaches only the selected pid",
+      "text": "Use a live control process in the same process group to prove that a signal reaches only the selected PID.",
+      "signal": "ac_gap",
+      "scope": "terminal-tests",
+      "status": "candidate",
+      "features": [
+        "wslazy"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md round 1 C15 (terminal-tests)"
+      ],
+      "created": "2026-10-05T04:58:37Z",
+      "last_seen": "2026-10-05T04:58:37Z"
+    },
+    {
+      "id": "L-002",
+      "key": "ac_gap::exercise a stale process identity through the ui and assert the resulting refresh not only the backend rejection",
+      "text": "Exercise a stale process identity through the UI and assert the resulting refresh, not only the backend rejection.",
+      "signal": "ac_gap",
+      "scope": "terminal-tests",
+      "status": "candidate",
+      "features": [
+        "wslazy"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md round 1 C16 (terminal-tests)"
+      ],
+      "created": "2026-10-05T04:58:37Z",
+      "last_seen": "2026-10-05T04:58:37Z"
+    },
+    {
+      "id": "L-003",
+      "key": "ac_gap::assert stdout and stderr separately when the cli contract names an output stream",
+      "text": "Assert stdout and stderr separately when the CLI contract names an output stream.",
+      "signal": "ac_gap",
+      "scope": "terminal-tests",
+      "status": "candidate",
+      "features": [
+        "wslazy"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md round 1 C30 (terminal-tests)"
+      ],
+      "created": "2026-10-05T04:58:37Z",
+      "last_seen": "2026-10-05T04:58:37Z"
+    },
+    {
+      "id": "L-004",
+      "key": "ac_gap::start the installed terminal executable in a pseudoterminal with runtime import paths isolated from build tooling",
+      "text": "Start the installed terminal executable in a pseudoterminal with runtime import paths isolated from build tooling.",
+      "signal": "ac_gap",
+      "scope": "terminal-tests",
+      "status": "candidate",
+      "features": [
+        "wslazy"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md round 1 C31 (terminal-tests)"
+      ],
+      "created": "2026-10-05T04:58:37Z",
+      "last_seen": "2026-10-05T04:58:37Z"
+    },
+    {
+      "id": "L-005",
+      "key": "ac_gap::execute a real shell when proving that command execution preserves source history files",
+      "text": "Execute a real shell when proving that command execution preserves source history files.",
+      "signal": "ac_gap",
+      "scope": "terminal-tests",
+      "status": "candidate",
+      "features": [
+        "wslazy"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md round 1 C32 (terminal-tests)"
+      ],
+      "created": "2026-10-05T04:58:37Z",
+      "last_seen": "2026-10-05T04:58:37Z"
+    },
+    {
+      "id": "L-006",
+      "key": "ac_gap::exercise both mouse and keyboard confirmation paths for permission and stale target failures",
+      "text": "Exercise both mouse and keyboard confirmation paths for permission and stale-target failures.",
+      "signal": "ac_gap",
+      "scope": "terminal-tests",
+      "status": "candidate",
+      "features": [
+        "wslazy"
+      ],
+      "recurrence": 1,
+      "harmful": 0,
+      "evidence": [
+        "verification.md round 1 C35 (terminal-tests)"
+      ],
+      "created": "2026-10-05T04:58:37Z",
+      "last_seen": "2026-10-05T04:58:37Z"
+    }
+  ]
+}

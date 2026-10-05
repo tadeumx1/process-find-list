@@ -199,13 +199,16 @@ class Acceptance(unittest.TestCase):
 
     def test_ac15(self):
         for sig in (signal.SIGTERM,signal.SIGKILL):
-            child=subprocess.Popen(['sleep','30'])
+            child=subprocess.Popen(['sleep','30'],preexec_fn=os.setpgrp)
+            control=subprocess.Popen(['sleep','30'],preexec_fn=lambda: os.setpgid(0,child.pid))
             try:
                 p=next(p for p in core.ProcessSampler().sample() if p.pid==child.pid)
                 core.signal_process(p,sig)
                 self.assertEqual(child.wait(timeout=2),-sig)
+                self.assertIsNone(control.poll(), 'signal must not reach another PID in the same group')
             finally:
                 if child.poll() is None: child.kill(); child.wait()
+                if control.poll() is None: control.kill(); control.wait()
 
     def test_ac16(self):
         child=subprocess.Popen(['sleep','30'])
@@ -213,6 +216,13 @@ class Acceptance(unittest.TestCase):
             p=next(p for p in core.ProcessSampler().sample() if p.pid==child.pid)
             with self.assertRaisesRegex(core.SourceError,'Processo não está mais disponível'):
                 core.signal_process(dataclasses.replace(p,start=p.start+1),signal.SIGTERM)
+            self.assertIsNone(child.poll())
+            self.show(0,[dataclasses.replace(p,start=p.start+1)])
+            with patch.object(self.backend,'signal_process',side_effect=core.signal_process):
+                self.app.action('term'); self.app.confirm(); settle(self.app)
+            self.assertIn('Processo não está mais disponível',self.app.message)
+            self.assertIn(0,self.backend.calls)
+            self.assertEqual(self.app.filtered(),[])
             self.assertIsNone(child.poll())
             child.terminate(); child.wait()
             with self.assertRaisesRegex(core.SourceError,'Processo não está mais disponível'):
@@ -368,6 +378,12 @@ class Acceptance(unittest.TestCase):
             r=subprocess.run([sys.executable,'-m','wslazy',*flags],capture_output=True,text=True)
             self.assertEqual(r.returncode,code)
             self.assertIn(text,r.stdout+r.stderr)
+            if code:
+                self.assertIn(text,r.stderr)
+                self.assertEqual(r.stdout,'')
+            else:
+                self.assertIn(text,r.stdout)
+                self.assertEqual(r.stderr,'')
 
     def test_ac31(self):
         from tests.install import exercise_install
@@ -375,6 +391,10 @@ class Acceptance(unittest.TestCase):
         self.assertEqual(result['version'],'WSLazy 0.1.0')
         self.assertEqual(result['module'],'WSLazy 0.1.0')
         self.assertEqual(result['requires'],[])
+        self.assertEqual(result['interactive']['exit'],0)
+        self.assertTrue(result['interactive']['restored'])
+        self.assertIn('WSLazy',result['interactive']['text'])
+        self.assertIn('Processos',result['interactive']['text'])
         readme=Path('README.md').read_text()
         self.assertIn('python3 -m wslazy',readme)
         self.assertIn('pip install .',readme)
@@ -386,6 +406,22 @@ class Acceptance(unittest.TestCase):
         self.show(4,entries); self.app.queries[4]='harmless'
         self.app.action('execute'); self.app.confirm()
         self.assertEqual(p.read_bytes(),before)
+        zsh=self.home/'.zsh_history'; zsh.write_text(': 100:0;printf harmless\n')
+        original={p:p.read_bytes(),zsh:zsh.read_bytes()}
+        ran=[]
+        def actual_shell(argv,cwd):
+            result=subprocess.run(argv,cwd=cwd,capture_output=True,text=True,
+                                  env={**os.environ,'HISTFILE':str(p if 'bash' in argv[0] else zsh)})
+            ran.append((Path(argv[0]).name,result.stdout,result.returncode))
+            return result.returncode
+        self.app.runner=actual_shell
+        for shell in ('bash','zsh'):
+            entries=core.read_history(self.home,str(p))
+            self.show(4,[e for e in entries if e.shell==shell])
+            self.app.action('execute'); self.app.confirm()
+            self.assertEqual(p.read_bytes(),original[p])
+            self.assertEqual(zsh.read_bytes(),original[zsh])
+        self.assertEqual(ran,[('bash','harmless',0),('zsh','harmless',0)])
 
     def test_ac33(self):
         for index,name in enumerate(VIEWS):
@@ -420,6 +456,23 @@ class Acceptance(unittest.TestCase):
         self.show(1,core.group_apps([process(1),process(2)])); self.app.action('term'); self.app.render()
         self.click('pid:1'); self.assertEqual(self.app.dialog.kind,'confirm')
         self.assertEqual(self.app.dialog.target.pid,2)
+        self.app.key('\x1b')
+        for use_mouse in (False,True):
+            for error,message in [(PermissionError(),'Permissão negada'),
+                                  (core.SourceError('Processo não está mais disponível'),'Processo não está mais disponível')]:
+                with self.subTest(mouse=use_mouse,error=message):
+                    before=list(self.backend.operations)
+                    self.show(0,[process()])
+                    with patch.object(self.backend,'signal_process',side_effect=error):
+                        if use_mouse:
+                            self.click('Encerrar'); self.click('Confirmar')
+                        else:
+                            self.app.key('x'); self.app.key('\t'); self.app.key('\n')
+                        settle(self.app)
+                    self.assertIn(message,self.app.message)
+                    self.assertEqual(self.backend.operations,before)
+                    self.assertTrue(self.app.running)
+                    self.assertIsNone(self.app.dialog)
 
     def test_ac36(self):
         self.app.key('?'); self.app.render()

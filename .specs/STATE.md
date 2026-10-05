@@ -9,8 +9,11 @@
 
 ## Handoff
 
-Plano aprovado em 2026-10-05. Implementação e 44 testes passaram. Próxima etapa: verificação independente C1–C40 sobre `257d712bbdbbb09c75c73131a16d767bebc85307..HEAD`.
+**Feature**: wslazy
+**Where**: C1–C40 implementados; rodada 1 independente encontrou seis lacunas de prova, corrigidas com assertions adicionais sem modificar a implementação.
+**Next step**: rodada 2 do verificador sobre o novo HEAD, com todos os proofs novamente e revisão focada em C15, C16, C30, C31, C32 e C35.
+**Blockers**: nenhum.
 
-Execução: `python3 -m wslazy`. Testes neste host: `PYTHONPATH=/tmp/wslazy-build-tools python3 -m unittest discover -v`. O Python do sistema não tem pip/ensurepip; ferramentas de build estão isoladas em /tmp. Instalação e execução em venv limpo verificadas, sem rede no teste.
+Execução: `python3 -m wslazy` ou `.venv/bin/wslazy` (instalado localmente). Testes neste host: `PYTHONPATH=/tmp/wslazy-build-tools python3 -m unittest discover -v`; 44 testes passam. Ferramentas de build estão isoladas em /tmp, sem mudança no Python do sistema.
 
-Limite de validação: serviços são exercitados por executor simulado e a integração lazydocker por executável temporário, pois o lazydocker não está instalado. Coleta de processos, portas e serviços foi executada no WSL real. Mouse e restauração do terminal foram exercitados em pseudoterminal real.
+Limite de validação: ações de serviço usam executor simulado; lazydocker é um substituto temporário porque o executável real não está instalado. Coleta de recursos foi executada no WSL real. Mouse, restauração e inicialização instalada foram exercitados em PTY real. UAT humano ainda não realizado.
