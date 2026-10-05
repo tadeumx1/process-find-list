@@ -77,11 +77,11 @@ class Acceptance(unittest.TestCase):
         return root
 
     def test_ac01(self):
-        self.assertEqual(VIEWS, ('Processos','Aplicativos','Portas','Serviços','Histórico'))
+        self.assertEqual(VIEWS, ('Processes','Applications','Ports','Services','History'))
         self.show(0, [process()])
         text = self.screen.text()
         for name in VIEWS: self.assertIn(name, text)
-        self.assertIn('Detalhes', text)
+        self.assertIn('Details', text)
         self.assertIn('python app.py', text)
 
     def test_ac02(self):
@@ -128,18 +128,18 @@ class Acceptance(unittest.TestCase):
         p=core.Port('tcp','0.0.0.0',9000,[])
         s=core.make_snapshot(2,[p])
         self.assertEqual(len(s.items),1)
-        self.assertIn('proprietário indisponível',s.items[0].details)
+        self.assertIn('owner unavailable',s.items[0].details)
 
     def test_ac07(self):
         out='db.service loaded active running Database\nidle.service loaded inactive dead Idle\n'
         with patch('wslazy.core.run_capture',return_value=out): services,errors=core.list_services()
         self.assertEqual(errors,[])
         self.assertEqual([(s.scope,s.name,s.state,s.description) for s in services],
-            [('sistema','db.service','active/running','Database'),('sistema','idle.service','inactive/dead','Idle'),
-             ('usuário','db.service','active/running','Database'),('usuário','idle.service','inactive/dead','Idle')])
+            [('system','db.service','active/running','Database'),('system','idle.service','inactive/dead','Idle'),
+             ('user','db.service','active/running','Database'),('user','idle.service','inactive/dead','Idle')])
 
     def test_ac08(self):
-        for error,expected in [(FileNotFoundError(),'não encontrado'),(subprocess.TimeoutExpired('ss',5),'5'),(core.SourceError('ss: falhou'),'falhou')]:
+        for error,expected in [(FileNotFoundError(),'not found'),(subprocess.TimeoutExpired('ss',5),'5'),(core.SourceError('ss: failed'),'failed')]:
             with self.subTest(error=error), patch('wslazy.core.subprocess.run',side_effect=error):
                 s=core.Backend().collect(2)
                 self.assertIn('ss',s.error)
@@ -164,13 +164,13 @@ class Acceptance(unittest.TestCase):
 
     def test_ac10(self):
         self.show(0,[])
-        self.assertIn('Nenhum resultado',self.screen.text())
+        self.assertIn('No results',self.screen.text())
         self.show(0,[process()]); self.app.queries[0]='nonexistent'; self.app.render()
-        self.assertIn('Nenhum resultado',self.screen.text())
+        self.assertIn('No results',self.screen.text())
 
     def test_ac11(self):
         self.app.render()
-        self.assertIn('Carregando',self.screen.text())
+        self.assertIn('Loading',self.screen.text())
         self.app.key('\t'); self.assertEqual(self.app.view,1)
         self.app.key('q'); self.assertFalse(self.app.running)
 
@@ -179,7 +179,7 @@ class Acceptance(unittest.TestCase):
         gs=core.group_apps([process(1,cpu=1,name='a'),process(2,cpu=8,name='b')])
         self.assertEqual([i.payload.name for i in core.make_snapshot(1,gs).items],['b','a'])
         self.assertEqual([i.payload.port for i in core.make_snapshot(2,[core.Port('tcp','*',80,[]),core.Port('udp','*',53,[])]).items],[53,80])
-        ss=[core.Service('z.service','usuário','active/running','Z'),core.Service('b.service','sistema','inactive/dead','B')]
+        ss=[core.Service('z.service','user','active/running','Z'),core.Service('b.service','system','inactive/dead','B')]
         self.assertEqual([i.payload.name for i in core.make_snapshot(3,ss).items],['b.service','z.service'])
         es=[core.Entry('old','bash','b',0),core.Entry('new','bash','a',1),core.Entry('other','zsh','b',1)]
         self.assertEqual([i.payload.command for i in core.make_snapshot(4,es).items],['new','other','old'])
@@ -214,18 +214,18 @@ class Acceptance(unittest.TestCase):
         child=subprocess.Popen(['sleep','30'])
         try:
             p=next(p for p in core.ProcessSampler().sample() if p.pid==child.pid)
-            with self.assertRaisesRegex(core.SourceError,'Processo não está mais disponível'):
+            with self.assertRaisesRegex(core.SourceError,'Process is no longer available'):
                 core.signal_process(dataclasses.replace(p,start=p.start+1),signal.SIGTERM)
             self.assertIsNone(child.poll())
             self.show(0,[dataclasses.replace(p,start=p.start+1)])
             with patch.object(self.backend,'signal_process',side_effect=core.signal_process):
                 self.app.action('term'); self.app.confirm(); settle(self.app)
-            self.assertIn('Processo não está mais disponível',self.app.message)
+            self.assertIn('Process is no longer available',self.app.message)
             self.assertIn(0,self.backend.calls)
             self.assertEqual(self.app.filtered(),[])
             self.assertIsNone(child.poll())
             child.terminate(); child.wait()
-            with self.assertRaisesRegex(core.SourceError,'Processo não está mais disponível'):
+            with self.assertRaisesRegex(core.SourceError,'Process is no longer available'):
                 core.signal_process(p,signal.SIGTERM)
         finally:
             if child.poll() is None: child.kill(); child.wait()
@@ -234,7 +234,7 @@ class Acceptance(unittest.TestCase):
         self.show(0,[process()])
         with patch.object(self.backend,'signal_process',side_effect=PermissionError()):
             self.app.action('term'); self.app.confirm(); settle(self.app)
-        self.assertIn('Permissão negada',self.app.message)
+        self.assertIn('Permission denied',self.app.message)
         self.assertTrue(self.app.running)
 
     def test_ac18(self):
@@ -252,37 +252,37 @@ class Acceptance(unittest.TestCase):
         self.assertEqual(self.app.dialog.kind,'choose')
 
     def test_ac19(self):
-        self.show(3,[core.Service('demo.service','usuário','active/running','Demo')])
-        for action in ('iniciar','parar','reiniciar'):
+        self.show(3,[core.Service('demo.service','user','active/running','Demo')])
+        for action in ('start','stop','restart'):
             self.app.action(action); self.app.render()
-            for value in ('demo.service','usuário',action): self.assertIn(value,self.screen.text())
+            for value in ('demo.service','user',action): self.assertIn(value,self.screen.text())
             self.assertEqual(self.backend.operations,[])
             self.app.key('\x1b')
 
     def test_ac20(self):
-        for scope in ('sistema','usuário'):
+        for scope in ('system','user'):
             s=core.Service('demo.service',scope,'active/running','Demo')
-            for action,verb in [('iniciar','start'),('parar','stop'),('reiniciar','restart')]:
+            for action,verb in [('start','start'),('stop','stop'),('restart','restart')]:
                 with patch('wslazy.core.subprocess.run',return_value=subprocess.CompletedProcess([],0,'','')) as run:
                     result=core.service_action(s,action)
                     argv=run.call_args.args[0]
                     self.assertIn(verb,argv); self.assertIn('demo.service',argv)
-                    self.assertEqual('--user' in argv,scope=='usuário')
+                    self.assertEqual('--user' in argv,scope=='user')
                     self.assertEqual(run.call_args.kwargs['timeout'],10)
-                    self.assertIn('aceita',result)
+                    self.assertIn('accepted',result)
             with patch('wslazy.core.subprocess.run',side_effect=subprocess.TimeoutExpired('systemctl',10)) as run:
-                with self.assertRaisesRegex(core.SourceError,'10'): core.service_action(s,'parar')
+                with self.assertRaisesRegex(core.SourceError,'10'): core.service_action(s,'stop')
                 self.assertEqual(run.call_count,1)
             with patch('wslazy.core.subprocess.run',return_value=subprocess.CompletedProcess([],1,'','unit failed')):
-                with self.assertRaisesRegex(core.SourceError,'unit failed'): core.service_action(s,'parar')
+                with self.assertRaisesRegex(core.SourceError,'unit failed'): core.service_action(s,'stop')
 
     def test_ac21(self):
         self.show(0,[process()]); self.app.action('term'); self.app.confirm(); settle(self.app)
         self.assertIn(0,self.backend.calls)
-        self.assertIn('enviado',self.app.message)
-        self.assertNotIn('encerrado',self.app.message)
-        self.show(3,[core.Service('demo.service','sistema','active/running','Demo')])
-        self.app.action('parar'); self.app.confirm(); settle(self.app)
+        self.assertIn('sent',self.app.message)
+        self.assertNotIn('terminated',self.app.message)
+        self.show(3,[core.Service('demo.service','system','active/running','Demo')])
+        self.app.action('stop'); self.app.confirm(); settle(self.app)
         self.assertIn(3,self.backend.calls)
 
     def test_ac22(self):
@@ -330,7 +330,7 @@ class Acceptance(unittest.TestCase):
 
     def test_ac26(self):
         with patch('wslazy.core.shutil.which',return_value=None):
-            with self.assertRaisesRegex(core.SourceError,'Shell.*não encontrado'): core.run_command('true','zsh',self.home)
+            with self.assertRaisesRegex(core.SourceError,'Shell.*not found'): core.run_command('true','zsh',self.home)
         self.show(4,[core.Entry('true','bash','history',0)])
         self.app.runner=lambda argv,cwd: (_ for _ in ()).throw(OSError('cannot start'))
         self.app.action('execute'); self.app.confirm()
@@ -359,7 +359,7 @@ class Acceptance(unittest.TestCase):
         self.screen.width=60; self.screen.height=15; self.app.render()
         self.assertIn('80',self.screen.text()); self.assertIn('24',self.screen.text())
         self.screen.width=120; self.screen.height=30; self.app.render()
-        self.assertIn('Processos',self.screen.text())
+        self.assertIn('Processes',self.screen.text())
         self.screen.width=40; self.app.render(); self.app.key('q'); self.assertFalse(self.app.running)
 
     def test_ac29(self):
@@ -374,7 +374,7 @@ class Acceptance(unittest.TestCase):
             self.assertEqual([p.pid for p in core.ProcessSampler(root).sample()],[123])
 
     def test_ac30(self):
-        for flags,code,text in [([],1,'Terminal interativo necessário'),(['--help'],0,'usage'),(['--version'],0,'0.1.0'),(['--unknown'],2,'error')]:
+        for flags,code,text in [([],1,'Interactive terminal required'),(['--help'],0,'usage'),(['--version'],0,'0.1.0'),(['--unknown'],2,'error')]:
             r=subprocess.run([sys.executable,'-m','wslazy',*flags],capture_output=True,text=True)
             self.assertEqual(r.returncode,code)
             self.assertIn(text,r.stdout+r.stderr)
@@ -394,7 +394,7 @@ class Acceptance(unittest.TestCase):
         self.assertEqual(result['interactive']['exit'],0)
         self.assertTrue(result['interactive']['restored'])
         self.assertIn('WSLazy',result['interactive']['text'])
-        self.assertIn('Processos',result['interactive']['text'])
+        self.assertIn('Processes',result['interactive']['text'])
         readme=Path('README.md').read_text()
         self.assertIn('python3 -m wslazy',readme)
         self.assertIn('pip install .',readme)
@@ -428,12 +428,12 @@ class Acceptance(unittest.TestCase):
             self.app.render(); self.click(name); self.assertEqual(self.app.view,index)
         self.show(0,[process(1),process(2)])
         self.click('row:1'); self.assertEqual(self.app.current().payload.pid,2)
-        self.click('Pesquisar'); self.assertTrue(self.app.searching)
-        self.app.key('\x1b'); self.app.render(); self.click('Encerrar'); self.assertEqual(self.app.dialog.kind,'confirm')
-        self.app.key('\x1b'); self.app.render(); self.click('Ajuda'); self.assertEqual(self.app.dialog.kind,'help')
-        self.app.key('\x1b'); self.app.render(); self.click('Sair'); self.assertFalse(self.app.running)
+        self.click('Search'); self.assertTrue(self.app.searching)
+        self.app.key('\x1b'); self.app.render(); self.click('Terminate'); self.assertEqual(self.app.dialog.kind,'confirm')
+        self.app.key('\x1b'); self.app.render(); self.click('Help'); self.assertEqual(self.app.dialog.kind,'help')
+        self.app.key('\x1b'); self.app.render(); self.click('Quit'); self.assertFalse(self.app.running)
         self.app.running=True; self.show(4,[core.Entry('echo hi','bash','history',0)])
-        self.click('Executar'); self.click('Editor'); self.app.key('!')
+        self.click('Run'); self.click('Editor'); self.app.key('!')
         self.assertEqual(self.app.dialog.text,'echo hi!')
 
     def test_ac34(self):
@@ -443,29 +443,29 @@ class Acceptance(unittest.TestCase):
         self.assertGreater(self.app.selected[0],0)
         self.app.mouse(r.x,r.y,curses.BUTTON4_PRESSED)
         self.assertEqual(self.app.selected[0],0)
-        r=next(r for r in self.app.regions if r.label=='Detalhes')
+        r=next(r for r in self.app.regions if r.label=='Details')
         self.app.mouse(r.x,r.y,curses.BUTTON5_PRESSED)
         self.assertGreater(self.app.detail_scroll,0)
         self.assertEqual(self.app.selected[0],0)
 
     def test_ac35(self):
-        self.show(0,[process()]); self.app.action('term'); self.app.render(); self.click('Cancelar')
+        self.show(0,[process()]); self.app.action('term'); self.app.render(); self.click('Cancel')
         self.assertEqual(self.backend.operations,[])
-        self.app.action('term'); self.app.render(); self.click('Confirmar'); settle(self.app)
+        self.app.action('term'); self.app.render(); self.click('Confirm'); settle(self.app)
         self.assertEqual(self.backend.operations,[('signal',123,signal.SIGTERM)])
         self.show(1,core.group_apps([process(1),process(2)])); self.app.action('term'); self.app.render()
         self.click('pid:1'); self.assertEqual(self.app.dialog.kind,'confirm')
         self.assertEqual(self.app.dialog.target.pid,2)
         self.app.key('\x1b')
         for use_mouse in (False,True):
-            for error,message in [(PermissionError(),'Permissão negada'),
-                                  (core.SourceError('Processo não está mais disponível'),'Processo não está mais disponível')]:
+            for error,message in [(PermissionError(),'Permission denied'),
+                                  (core.SourceError('Process is no longer available'),'Process is no longer available')]:
                 with self.subTest(mouse=use_mouse,error=message):
                     before=list(self.backend.operations)
                     self.show(0,[process()])
                     with patch.object(self.backend,'signal_process',side_effect=error):
                         if use_mouse:
-                            self.click('Encerrar'); self.click('Confirmar')
+                            self.click('Terminate'); self.click('Confirm')
                         else:
                             self.app.key('x'); self.app.key('\t'); self.app.key('\n')
                         settle(self.app)
@@ -508,11 +508,11 @@ class Acceptance(unittest.TestCase):
         self.assertEqual((self.app.view,self.app.selected[0],self.app.queries[0]),(0,1,'python'))
         self.assertIn('4',self.app.message)
         self.app.key('k'); self.assertEqual(self.app.selected[0],0)
-        self.app.render(); self.click('Aplicativos'); self.assertEqual(self.app.view,1)
+        self.app.render(); self.click('Applications'); self.assertEqual(self.app.view,1)
 
     def test_ac39(self):
         with patch('wslazy.ui.shutil.which',return_value=None): self.app.action('lazydocker')
-        self.assertIn('Lazydocker não encontrado no PATH',self.app.message)
+        self.assertIn('Lazydocker not found in PATH',self.app.message)
         self.assertTrue(self.app.running)
 
     def test_ac40(self):
@@ -521,4 +521,4 @@ class Acceptance(unittest.TestCase):
         self.assertIn('launch failed',self.app.message)
         self.assertTrue(self.app.running)
         self.app.key('\t'); self.assertEqual(self.app.view,1)
-        self.app.render(); self.click('Processos'); self.assertEqual(self.app.view,0)
+        self.app.render(); self.click('Processes'); self.assertEqual(self.app.view,0)

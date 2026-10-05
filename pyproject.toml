@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "wslazy"
 version = "0.1.0"
-description = "Processos, aplicativos, portas, serviços e histórico do WSL no terminal"
+description = "Manage WSL processes, applications, ports, services, and command history in the terminal"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []

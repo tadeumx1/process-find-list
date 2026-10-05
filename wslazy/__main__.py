@@ -7,17 +7,17 @@ from . import __version__
 
 
 def main():
-    parser = argparse.ArgumentParser(prog='wslazy', description='Processos, portas, serviços e comandos do seu WSL em um terminal.')
+    parser = argparse.ArgumentParser(prog='wslazy', description='Manage WSL processes, ports, services, and commands in one terminal.')
     parser.add_argument('--version', action='version', version=f'WSLazy {__version__}')
     parser.parse_args()
     if not sys.stdin.isatty() or not sys.stdout.isatty():
-        print('Terminal interativo necessário', file=sys.stderr)
+        print('Interactive terminal required', file=sys.stderr)
         return 1
     if not sys.platform.startswith('linux') or not os.path.isdir('/proc'):
-        print('WSLazy exige Linux com /proc (incluindo WSL).', file=sys.stderr)
+        print('WSLazy requires Linux with /proc (including WSL).', file=sys.stderr)
         return 1
     if os.environ.get('TERM','dumb') == 'dumb':
-        print('Terminal sem suporte curses; configure TERM no seu terminal.', file=sys.stderr)
+        print('Terminal does not support curses; configure TERM in your terminal.', file=sys.stderr)
         return 1
     import curses
     from .ui import App
@@ -27,7 +27,7 @@ def main():
     except KeyboardInterrupt:
         return 0
     except (curses.error, OSError) as exc:
-        print(f'Não foi possível iniciar o terminal: {exc}', file=sys.stderr)
+        print(f'Could not initialize the terminal: {exc}', file=sys.stderr)
         return 1
     return 0
 

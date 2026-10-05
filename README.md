@@ -1,33 +1,33 @@
 # WSLazy
 
-Gerenciador de processos do WSL no terminal, inspirado no lazydocker. Navegue com **teclado ou mouse** entre processos, aplicativos, portas, serviços e comandos recentes. O botão **Lazydocker [D]** abre a ferramenta no mesmo terminal e retorna ao WSLazy quando ela termina.
+A terminal manager for WSL processes, applications, ports, services, and command history, inspired by lazydocker. Use **keyboard or mouse** to explore local resources and act on a selected process. The **Lazydocker [D]** button opens lazydocker in the same terminal and returns to WSLazy when it exits.
 
 ```text
- WSLazy     seu WSL, em um só lugar         Lazydocker [D]  Ajuda [?]
+ WSLazy     your WSL, in one place            Lazydocker [D]  Help [?]
 
- Processos [1]  Aplicativos [2]  Portas [3]  Serviços [4]  Histórico [5]
+ Processes [1]  Applications [2]  Ports [3]  Services [4]  History [5]
 
- / Pesquisar: python
+ / Search: python
 
- PID     USUÁRIO   CPU     MEMÓRIA     COMANDO   │ Detalhes
- 1420    você     12.4%    48.0 MiB    python …  │ PID: 1420
-                                              │ Comando:
+ PID     USER     CPU      MEMORY     COMMAND   │ Details
+ 1420    you      12.4%    48.0 MiB    python …  │ PID: 1420
+                                              │ Command:
                                               │ python app.py
 
- Encerrar [x]  Forçar [K]  Atualizar [F5]                  Sair [q]
+ Terminate [x]  Kill [K]  Refresh [F5]                     Quit [q]
 ```
 
-## Começar
+## Getting started
 
-Requer **Linux/WSL e Python 3.10+ com curses**. Não há dependências Python de runtime de terceiros.
-
-Da pasta do projeto, execute:
+Requires **Linux/WSL and Python 3.10+ with curses**. There are no third-party Python runtime dependencies.
 
 ```bash
+git clone https://github.com/tadeumx1/process-find-list.git
+cd process-find-list
 python3 -m wslazy
 ```
 
-Para instalar o comando `wslazy` num ambiente virtual:
+To install the `wslazy` command in a virtual environment:
 
 ```bash
 python3 -m venv .venv
@@ -36,70 +36,70 @@ pip install .
 wslazy
 ```
 
-No Ubuntu/WSL, se `venv` ou `pip` estiverem ausentes, instale as ferramentas de empacotamento da distribuição:
+On Ubuntu/WSL, install `python3-venv` and `python3-pip` if the virtual environment tools are missing. Running directly with `python3 -m wslazy` does not require pip.
 
-```bash
-sudo apt install python3-venv python3-pip
-```
+See the [running guide](docs/running.md) for requirements, installation, an example local server, updates, and troubleshooting.
 
-Também é possível expor o comando instalado fora do ambiente virtual, adicionando `$(pwd)/.venv/bin` ao seu `PATH`. Para remover, exclua o ambiente virtual e essa entrada do PATH. A execução direta com `python3 -m wslazy` funciona sem `pip`.
+## Views
 
-- **Portas:** usa `ss`, fornecido pelo pacote `iproute2`.
-- **Serviços:** usa systemd; lista os escopos de sistema e usuário. A ausência de um escopo aparece na interface sem bloquear as outras telas.
-- **Lazydocker:** opcional; o executável `lazydocker` deve estar no `PATH`. A aplicação não o instala nem inicia o Docker. Consulte o [projeto oficial](https://github.com/jesseduffield/lazydocker) para instalação. Enquanto ele está aberto, os controles são os da própria ferramenta.
-- Terminal recomendado: **80×24 ou maior**, com cores e eventos de mouse, como Windows Terminal. Sem eventos de mouse, todos os controles continuam acessíveis pelo teclado.
+| View | Contents |
+| --- | --- |
+| Processes | Readable processes in the current Linux `/proc`, including PID, user, CPU, resident memory, and command. State and start time are in the details. |
+| Applications | Processes grouped by executable name and UID, with total usage and individual PIDs. Multiple Node servers appear together under `node`, not necessarily their project names. |
+| Ports | Listening TCP and bound UDP sockets, including IPv4/IPv6 and owners when available. |
+| Services | Loaded systemd `.service` units in the system and user scopes, including inactive units. |
+| History | Recent Bash and Zsh commands, their source files, and an editable review before execution. |
 
-## Controles
+Servers launched by Codex or another tool appear when they run in the same WSL distribution and relevant Linux namespaces. For example, a Node development server can appear in Processes, Applications and Ports; the Services view specifically lists systemd units.
 
-| Ação | Teclado | Mouse |
+Resource collection repeats two seconds after the previous collection finishes. CPU is shown as `—` for the first sample and can exceed 100% when a process uses multiple cores. Windows processes and other WSL distributions are outside this application's scope. A source failure is shown in its view without blocking navigation.
+
+## Controls
+
+| Action | Keyboard | Mouse |
 | --- | --- | --- |
-| Trocar tela | `Tab`, `Shift+Tab`, `1`–`5` | Clique na aba |
-| Selecionar item | `↑` / `↓`, `j` / `k`, `PgUp` / `PgDn` | Clique ou roda na lista |
-| Rolar detalhes | `[` / `]` | Roda sobre os detalhes |
-| Pesquisar | `/`, digitar, `Enter` para terminar | Clique em Pesquisar e digite |
-| Limpar pesquisa | `Ctrl+U` no campo ou `Esc` fora dele | Clique no campo e use `Ctrl+U` |
-| Abrir detalhes completos | `Enter` | Leia o painel, rolando o texto |
-| Encerrar processo | `x` → `Tab` → `Enter` | Encerrar → Confirmar |
-| Forçar encerramento | `K` → `Tab` → `Enter` | Forçar → Confirmar |
-| Iniciar / parar / reiniciar serviço | `s` / `t` / `r` → `Tab` → `Enter` | Botão da ação → Confirmar |
-| Revisar comando recente | `Enter` na tela Histórico | Executar |
-| Abrir lazydocker | `D` | Lazydocker |
-| Atualizar agora | `F5` | Atualizar |
-| Ajuda | `?` | Ajuda |
-| Sair | `q` | Sair |
+| Switch views | `Tab`, `Shift+Tab`, `1`–`5` | Click a tab |
+| Select an item | `↑` / `↓`, `j` / `k`, `PgUp` / `PgDn` | Click a row or scroll over the list |
+| Scroll details | `[` / `]` | Scroll over the details |
+| Search | `/`, type, `Enter` to finish | Click Search, then type |
+| Clear search | `Ctrl+U` in the field or `Esc` outside it | Click the field and use `Ctrl+U` |
+| Open full details | `Enter` | Read and scroll the details panel |
+| Terminate a process | `x` → `Tab` → `Enter` | Terminate → Confirm |
+| Kill a process | `K` → `Tab` → `Enter` | Kill → Confirm |
+| Start / stop / restart a service | `s` / `t` / `r` → `Tab` → `Enter` | Action button → Confirm |
+| Review a history command | `Enter` in History | Run |
+| Open lazydocker | `D` | Lazydocker |
+| Refresh now | `F5` | Refresh |
+| Help | `?` | Help |
+| Quit | `q` | Quit |
 
-A confirmação de processo mostra **PID, comando e sinal**. `Esc` ou **Cancelar** abandona a ação. Em aplicativos ou portas com vários processos, escolha primeiro um único PID. Encerrar usa `SIGTERM`; Forçar usa `SIGKILL`. O programa confere a identidade do processo e usa `pidfd` para que um PID reutilizado não direcione o sinal a outro processo. Em um kernel sem esse suporte, a ação é recusada.
+A process confirmation shows the **PID, command, and signal**. `Esc` or **Cancel** abandons the action. If an application or port has multiple processes, choose a single PID first. Terminate sends `SIGTERM`; Kill sends `SIGKILL`. WSLazy checks process identity and uses `pidfd` to avoid signaling a different process after PID reuse. It refuses this action on a kernel without that support.
 
-As operações usam suas permissões atuais e não elevam privilégios automaticamente. Sinal enviado ou operação aceita não significa que o processo ou serviço já terminou: a lista é consultada novamente. O encerramento de um processo supervisionado pode causar seu reinício pelo supervisor.
+Operations use your current permissions without automatic privilege escalation. An accepted operation or sent signal does not guarantee the resource has already changed state; WSLazy refreshes the list to check. A supervisor may restart a process you terminate.
 
-## Histórico de comandos
+## Command history
 
-Lê as últimas 2.000 entradas de cada arquivo disponível entre `$HISTFILE`, `~/.bash_history` e `~/.zsh_history`. Caminhos repetidos são lidos uma vez; comandos repetidos em cada origem mostram a ocorrência mais recente. A posição no arquivo define a ordem, não uma cronologia global entre shells. Metadados Bash/Zsh são removidos da apresentação.
+WSLazy reads up to the last 2,000 entries from each available file among `$HISTFILE`, `~/.bash_history`, and `~/.zsh_history`. Repeated paths are read once. Duplicate commands in a source retain their most recent occurrence. Ordering follows each file's position, not a global timeline across shells.
 
-Somente comandos **já gravados em disco** ficam disponíveis. Se necessário, grave o histórico do shell antes de abrir o WSLazy: `history -a` no Bash ou `fc -AI` no Zsh. Para um caminho customizado, exporte `HISTFILE` para que o processo filho o receba. Bash sem timestamps nem escapes não contém informação suficiente para reconstruir todos os comandos multilinha.
+Only history **already written to disk** is available. Before opening WSLazy, use `history -a` in Bash or `fc -AI` in Zsh to save pending entries if needed. Export `HISTFILE` to pass a custom history path to the application. Bash history without timestamps or continuations may not contain enough information to reconstruct every multiline command.
 
-Antes de executar, a revisão mostra o texto completo, o shell e o **diretório atual**. Edite com as setas, `Home`, `End`, `Backspace`, `Delete` e `Ctrl+U`; `Ctrl+N` insere uma linha. `Enter` no editor ou **Confirmar** executa o texto revisado. `Tab` alterna editor e botões; `Esc` cancela.
+The review shows the complete command, shell, and **current working directory**. Edit with arrow keys, `Home`, `End`, `Backspace`, `Delete`, and `Ctrl+U`; `Ctrl+N` inserts a newline. `Enter` in the editor or **Confirm** executes the reviewed text. `Tab` switches between the editor and buttons; `Esc` cancels.
 
-O comando usa `bash -c` ou `zsh -c`, sem reconstruir diretório, variáveis, aliases ou funções da sessão original. Após a execução, o código de saída é mostrado; pressione Enter para retornar à interface. O WSLazy não adiciona nem reescreve entradas nos arquivos de histórico. Comandos executados têm os mesmos efeitos que teriam no seu shell.
+Commands run through `bash -c` or `zsh -c`. WSLazy does not recreate the original session's directory, variables, aliases, or functions. After execution, the exit code is shown; press Enter to return. WSLazy does not add or rewrite entries in the source history files. Commands you execute retain their normal shell effects.
 
-## O que cada tela mostra
-
-- **Processos:** processos legíveis em `/proc` da distribuição atual, com PID, usuário, CPU, memória e comando; estado e início estão nos detalhes.
-- **Aplicativos:** agrupamentos por nome do executável e UID, com consumo somado e os PIDs integrantes.
-- **Portas:** TCP em escuta e UDP vinculados, incluindo IPv4/IPv6. A porta continua visível quando o proprietário não pode ser identificado.
-- **Serviços:** unidades `.service` carregadas no systemd, de sistema e usuário, inclusive inativas.
-- **Histórico:** comandos recentes de Bash e Zsh, com origem e revisão antes de executar.
-
-A coleta das telas de recursos se repete dois segundos após a coleta anterior. Na primeira amostra, CPU aparece como `—`; depois, o uso é calculado entre amostras e pode ultrapassar 100% em processos que usam vários núcleos. Processos Windows e de outras distribuições não são incluídos. Erros de coleta aparecem na tela correspondente.
-
-## Desenvolvimento e validação
+## Development and validation
 
 ```bash
-python3 -m unittest tests.test_acceptance -v
+python -m pip install setuptools wheel
+python -m unittest discover -v
 ```
 
-O teste de instalação precisa de `pip`, `setuptools` e `wheel` no Python que executa os testes. Instale essas ferramentas em seu ambiente de desenvolvimento com `python -m pip install setuptools wheel`. Elas não são dependências de runtime do WSLazy. O teste cria e remove seu próprio ambiente isolado e instala um wheel local sem acesso à rede.
+The installation test needs pip, setuptools, and wheel in the development environment. These are build/test tools, not application runtime dependencies. It builds a local wheel, installs from source, and launches the installed command in an isolated virtual environment without network access during installation.
 
-Os testes exercitam processos descartáveis, históricos temporários, um pseudoterminal real e um substituto temporário do lazydocker. Operações de serviço são testadas com executor simulado, sem alterar serviços reais.
+The suite exercises disposable processes, temporary histories, real pseudoterminal input, and a temporary lazydocker substitute. Service actions use a simulated executor instead of changing real services.
 
-O [plano](.specs/features/wslazy/plan.md) e os [checks](.specs/features/wslazy/checks.md) documentam os critérios de aceitação. A implementação usa o perfil de verificação `light` da skill `tlc-spec-lean`.
+Read [CONTRIBUTING.MD](CONTRIBUTING.MD) before proposing a change. The [original plan](.specs/features/wslazy/plan.md) and [English-content revision](.specs/features/english-content/plan.md) record the requirements. Historical reports retain the language used when those versions were reviewed.
+
+## Built with
+
+This project was built using **Codex** and the **`tlc-spec-lean` skill**. The workflow records requirements, derives executable checks, builds the change, and uses an independent verifier. Verification currently uses the `light` profile; automated checks do not replace human usability review.

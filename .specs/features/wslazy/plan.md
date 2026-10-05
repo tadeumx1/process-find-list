@@ -1,5 +1,6 @@
 # WSLazy — gerenciador de processos para o terminal
 
+> Language revision: the user subsequently requested English for all UI, code, README and new documentation. The [English-content plan](../english-content/plan.md) supersedes the Portuguese copy in this original plan; functional requirements remain unchanged.
 ## Problem
 
 Quem desenvolve no WSL precisa alternar entre comandos diferentes para descobrir quais aplicativos estão rodando, quem ocupa uma porta e quais serviços estão ativos. Encerrar uma execução e recuperar um comando recente exige procurar e relacionar essas informações manualmente. O pedido não informa medidas de frequência ou tempo perdido.

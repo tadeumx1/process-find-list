@@ -13,44 +13,45 @@ import unicodedata
 
 from . import core
 
-VIEWS = ('Processos', 'Aplicativos', 'Portas', 'Serviços', 'Histórico')
-HEADERS = (('PID', 'USUÁRIO', 'CPU', 'MEMÓRIA', 'COMANDO'),
-           ('APLICATIVO', 'UID', 'PIDs', 'CPU', 'MEMÓRIA'),
-           ('PROTO', 'PORTA', 'ENDEREÇO', 'PROPRIETÁRIO'),
-           ('UNIDADE', 'ESCOPO', 'ESTADO', 'DESCRIÇÃO'), ('SHELL', 'COMANDO'))
-HELP = '''NAVEGAÇÃO
-Tab / Shift+Tab     próxima / visão anterior
-1–5                abrir uma visão
-↑ ↓ ou j/k         selecionar item
-PgUp / PgDn        percorrer lista
-[ / ]              rolar detalhes
-/                  pesquisar (Esc termina; Ctrl+U limpa)
-Enter              detalhes / executar entrada do histórico
-F5                 atualizar agora
+VIEWS = ('Processes', 'Applications', 'Ports', 'Services', 'History')
+HEADERS = (('PID', 'USER', 'CPU', 'MEMORY', 'COMMAND'),
+           ('APPLICATION', 'UID', 'PIDs', 'CPU', 'MEMORY'),
+           ('PROTO', 'PORT', 'ADDRESS', 'OWNER'),
+           ('UNIT', 'SCOPE', 'STATE', 'DESCRIPTION'), ('SHELL', 'COMMAND'))
+HELP = '''NAVIGATION
+Tab / Shift+Tab     next / previous view
+1–5                open a view
+↑ ↓ or j/k         select an item
+PgUp / PgDn        scroll the list
+[ / ]              scroll details
+/                  search (Esc finishes; Ctrl+U clears)
+Enter              details / run a history entry
+F5                 refresh now
 
-AÇÕES
-x                  encerrar processo (SIGTERM)
-K                  forçar encerramento (SIGKILL)
-s / t / r          iniciar / parar / reiniciar serviço
-D                  abrir Lazydocker no mesmo terminal
-?                  esta ajuda
-q                  sair do WSLazy
+ACTIONS
+x                  terminate process (SIGTERM)
+K                  kill process (SIGKILL)
+s / t / r          start / stop / restart service
+D                  open Lazydocker in this terminal
+?                  show this help
+q                  quit WSLazy
 
-DIÁLOGOS
-Tab                alternar botões / editor
-Enter              ativar botão; no editor, confirmar execução
-Esc                cancelar / fechar
-Editor: ← → Home End, Backspace, Delete, Ctrl+U limpa
-Ctrl+N insere nova linha; ↑ ↓ percorrem linhas do comando
+DIALOGS
+Tab                switch buttons / editor
+Enter              activate button; in the editor, confirm execution
+Esc                cancel / close
+Editor: ← → Home End, Backspace, Delete, Ctrl+U clears
+Ctrl+N inserts a new line; ↑ ↓ move between command lines
 
 MOUSE
-Clique nas abas, linhas, campos e botões.
-Roda sobre a lista navega; sobre detalhes rola o texto.
-Confirmações obedecem às mesmas regras do teclado.
+Click tabs, rows, fields, and buttons.
+Scroll over the list to navigate, or over details to read more.
+Mouse confirmations follow the same rules as the keyboard.
 
-O histórico usa o diretório atual, sem recriar a sessão original.
-No lazydocker, valem os controles da própria ferramenta.
-Shift + seleção do mouse costuma copiar texto no terminal.'''
+History runs in the current directory, without recreating the original session.
+Lazydocker uses its own controls while it is open.
+Shift + mouse selection usually copies text in your terminal.'''
+
 
 
 @dataclass
@@ -118,7 +119,7 @@ class App:
         self.dialog = None
         self.regions = []
         self.detail_scroll = 0
-        self.message = 'Pronto · clique ou use os atalhos · ? ajuda'
+        self.message = 'Ready · click or use shortcuts · ? help'
         self.colors = False
         self.external_active = False
 
@@ -196,10 +197,10 @@ class App:
         now = time.monotonic() if now is None else now
         for view, started in tuple(self.collect_started.items()):
             if now-started >= 5 and view not in self.timed_out:
-                source = ('/proc', '/proc', 'ss', 'systemctl', 'histórico')[view]
+                source = ('/proc', '/proc', 'ss', 'systemctl', 'history')[view]
                 old = self.snapshots[view]
                 self.set_snapshot(view, core.Snapshot(old.items if old else [],
-                    f'{source}: limite de 5 segundos de coleta; aguardando a fonte'))
+                    f'{source}: collection timed out after 5 seconds; waiting for the source'))
                 self.timed_out.add(view)
         if now - self.last_refresh[self.view] >= 2:
             self.collect(self.view)
@@ -276,24 +277,24 @@ class App:
         self.screen.erase()
         h, w = self.screen.getmaxyx()
         if w < 80 or h < 24:
-            self.put(1, 1, 'Amplie o terminal para 80 colunas × 24 linhas.')
-            self.put(3, 1, 'q para sair')
+            self.put(1, 1, 'Resize the terminal to at least 80 columns × 24 rows.')
+            self.put(3, 1, 'q to quit')
             self.screen.refresh()
             return
         self.put(1, 2, 'WSLazy', 8, self.attr(1, True))
-        self.put(1, 11, 'seu WSL, em um só lugar', w-52, self.attr(0))
+        self.put(1, 11, 'your WSL, in one place', w-52, self.attr(0))
         self.button('Lazydocker', 'D', 1, w-37, lambda: self.action('lazydocker'))
-        self.button('Ajuda', '?', 1, w-18, lambda: self.action('help'))
+        self.button('Help', '?', 1, w-18, lambda: self.action('help'))
         x = 2
         for index, name in enumerate(VIEWS):
             x = self.button(name, str(index+1), 3, x, lambda i=index: self.switch(i), self.view == index)
-        self.put(5, 2, f' / Pesquisar: {self.queries[self.view]}' + ('▏' if self.searching else ''), w-4,
+        self.put(5, 2, f' / Search: {self.queries[self.view]}' + ('▏' if self.searching else ''), w-4,
                  self.attr(1) if self.searching else curses.A_DIM)
-        self.region('Pesquisar', 2, 5, w-4, 1, self.begin_search)
+        self.region('Search', 2, 5, w-4, 1, self.begin_search)
         split = max(44, int(w * .61))
         width = split - 3
         self.put(7, 2, self.row_text(HEADERS[self.view], width), width, self.attr(1, True))
-        self.put(7, split+2, 'Detalhes · [ / ] ou roda do mouse', w-split-4, self.attr(1, True))
+        self.put(7, split+2, 'Details · [ / ] or mouse wheel', w-split-4, self.attr(1, True))
         rows = h - 15
         items = self.filtered()
         index = min(self.selected[self.view], max(0, len(items)-1))
@@ -301,9 +302,9 @@ class App:
         top = max(0, index - rows + 1)
         snapshot = self.snapshots[self.view]
         if snapshot is None:
-            self.put(9, 2, 'Carregando…', width, self.attr(3))
+            self.put(9, 2, 'Loading…', width, self.attr(3))
         elif not items:
-            self.put(9, 2, 'Nenhum resultado', width, curses.A_DIM)
+            self.put(9, 2, 'No results', width, curses.A_DIM)
         for offset, item in enumerate(items[top:top+rows]):
             row_index = top + offset
             self.put(8+offset, 2, self.row_text(item.cells, width), width,
@@ -311,28 +312,28 @@ class App:
             self.region(f'row:{row_index}', 2, 8+offset, width, 1, lambda i=row_index: self.select_row(i))
         current = self.current()
         detail_width = w - split - 4
-        details = current.details if current else 'Selecione um item na lista.'
+        details = current.details if current else 'Select an item in the list.'
         lines = self.wrap(details, detail_width)
         for i, line in enumerate(lines[self.detail_scroll:self.detail_scroll+rows]):
             self.put(8+i, split+2, line, detail_width)
-        self.region('Detalhes', split+1, 8, w-split-2, rows, lambda: None)
+        self.region('Details', split+1, 8, w-split-2, rows, lambda: None)
         for y in range(7, h-6):
             self.put(y, split, '│', 1, curses.A_DIM)
-        count = f'{len(items)} itens · atualização 2s' + (' · coletando…' if self.view in self.collecting else '')
+        count = f'{len(items)} items · refresh 2s' + (' · collecting…' if self.view in self.collecting else '')
         self.put(h-6, 2, count, w-4, curses.A_DIM)
         if snapshot and snapshot.error:
             self.put(h-5, 2, snapshot.error.replace('\n', ' · '), w-4, self.attr(3))
         x = 2
         if self.view in (0, 1, 2):
-            actions = [('Encerrar','x','term'), ('Forçar','K','kill')]
+            actions = [('Terminate','x','term'), ('Kill','K','kill')]
         elif self.view == 3:
-            actions = [('Iniciar','s','iniciar'), ('Parar','t','parar'), ('Reiniciar','r','reiniciar')]
+            actions = [('Start','s','start'), ('Stop','t','stop'), ('Restart','r','restart')]
         else:
-            actions = [('Executar','Enter','execute')]
+            actions = [('Run','Enter','execute')]
         for label, key, action in actions:
             x = self.button(label, key, h-4, x, lambda a=action: self.action(a))
-        self.button('Atualizar', 'F5', h-4, x, lambda: self.action('refresh'))
-        self.button('Sair', 'q', h-4, w-13, lambda: self.action('quit'))
+        self.button('Refresh', 'F5', h-4, x, lambda: self.action('refresh'))
+        self.button('Quit', 'q', h-4, w-13, lambda: self.action('quit'))
         self.put(h-2, 2, self.message, w-4, self.attr(2))
         if self.dialog:
             self.render_dialog()
@@ -359,8 +360,8 @@ class App:
         start = top+3
         available = bottom-start-2
         if d.kind == 'edit':
-            self.put(start, left+2, f'Shell: {d.target.shell} · Diretório: {d.cwd}', width)
-            self.put(start+1, left+2, 'Revise o comando completo · Enter confirma · Ctrl+N nova linha · Esc cancela', width, curses.A_DIM)
+            self.put(start, left+2, f'Shell: {d.target.shell} · Directory: {d.cwd}', width)
+            self.put(start+1, left+2, 'Review the full command · Enter runs · Ctrl+N new line · Esc cancels', width, curses.A_DIM)
             start += 3
             available -= 3
             # Display the insertion point as a visible marker, including multiline commands.
@@ -385,12 +386,12 @@ class App:
             for i, line in enumerate(lines[d.scroll:d.scroll+available]):
                 self.put(start+i, left+2, line, width)
         if d.kind == 'help':
-            self.button('Fechar', 'Esc', bottom-1, left+2, lambda: self.close_dialog())
+            self.button('Close', 'Esc', bottom-1, left+2, lambda: self.close_dialog())
         else:
-            self.button('Cancelar', 'Esc', bottom-1, left+2, lambda: self.close_dialog(),
+            self.button('Cancel', 'Esc', bottom-1, left+2, lambda: self.close_dialog(),
                         d.focus == (2 if d.kind == 'edit' else 0))
             if d.kind != 'choose':
-                self.button('Confirmar', 'Enter', bottom-1, right-24, self.confirm, d.focus == 1)
+                self.button('Confirm', 'Enter', bottom-1, right-24, self.confirm, d.focus == 1)
 
     def select_row(self, index):
         self.selected[self.view] = index
@@ -415,7 +416,7 @@ class App:
                     self.dialog.selected = max(0, min(len(self.dialog.choices)-1, self.dialog.selected+delta))
                 else:
                     self.dialog.scroll = max(0, self.dialog.scroll+delta)
-            elif any(r.label == 'Detalhes' and r.contains(x,y) for r in self.regions):
+            elif any(r.label == 'Details' and r.contains(x,y) for r in self.regions):
                 self.detail_scroll = max(0, self.detail_scroll+delta)
             elif y >= 8:
                 self.move(delta)
@@ -462,7 +463,7 @@ class App:
         elif key == '\x1b': self.queries[self.view] = ''; self.detail_scroll = 0
         else:
             actions = {'q':'quit','?':'help','D':'lazydocker','x':'term','K':'kill',
-                       's':'iniciar','t':'parar','r':'reiniciar',curses.KEY_F5:'refresh',
+                       's':'start','t':'stop','r':'restart',curses.KEY_F5:'refresh',
                        '\n':'execute' if self.view == 4 else 'details', '\r':'execute' if self.view == 4 else 'details'}
             if key in actions: self.action(actions[key])
 
@@ -517,20 +518,20 @@ class App:
         if self.dialog or self.external_active:
             return
         if action == 'quit': self.running = False; return
-        if action == 'help': self.dialog = Dialog('help','Atalhos e ajuda',HELP); return
+        if action == 'help': self.dialog = Dialog('help','Shortcuts and help',HELP); return
         if action == 'refresh': self.collect(self.view); return
         if action == 'lazydocker': self.launch_lazydocker(); return
         item = self.current()
         if not item:
-            self.message = 'Selecione um item primeiro'
+            self.message = 'Select an item first'
             return
-        if action == 'details': self.dialog = Dialog('help','Detalhes',item.details); return
+        if action == 'details': self.dialog = Dialog('help','Details',item.details); return
         if self.action_pending:
-            self.message = 'Aguarde a operação em andamento'
+            self.message = 'Wait for the current operation'
             return
         if action == 'execute' and self.view == 4:
             entry = item.payload
-            self.dialog = Dialog('edit','Executar comando · revisão',entry.command,entry,
+            self.dialog = Dialog('edit','Run command · review',entry.command,entry,
                                  cursor=len(entry.command),cwd=os.getcwd())
         elif action in ('term','kill') and self.view in (0,1,2):
             try:
@@ -539,22 +540,22 @@ class App:
                 else:
                     choices = [core.find_process(pid) for _,pid in item.payload.owners]
                 if not choices:
-                    self.message = 'proprietário indisponível'
+                    self.message = 'owner unavailable'
                 elif len(choices) == 1:
                     self.signal_dialog(choices[0],action)
                 else:
-                    self.dialog = Dialog('choose','Escolha um único PID',action=action,choices=choices)
+                    self.dialog = Dialog('choose','Choose a single PID',action=action,choices=choices)
             except (OSError, core.SourceError) as exc:
                 self.message = core.error_text(exc)
                 self.collect(self.view)
-        elif action in ('iniciar','parar','reiniciar') and self.view == 3:
+        elif action in ('start','stop','restart') and self.view == 3:
             s = item.payload
-            self.dialog = Dialog('confirm',f'Confirmar: {action}',
-                                 f'Unidade: {s.name}\nEscopo: {s.scope}\nAção: {action}',s,action)
+            self.dialog = Dialog('confirm',f'Confirm: {action}',
+                                 f'Unit: {s.name}\nScope: {s.scope}\nAction: {action}',s,action)
 
     def signal_dialog(self, process, action):
         sig = 'SIGTERM' if action == 'term' else 'SIGKILL'
-        self.dialog = Dialog('confirm',f'Enviar {sig}?',f'PID: {process.pid}\nComando: {process.command}\nSinal: {sig}\n\nApenas este processo receberá o sinal.',process,action)
+        self.dialog = Dialog('confirm',f'Send {sig}?',f'PID: {process.pid}\nCommand: {process.command}\nSignal: {sig}\n\nOnly this process will receive the signal.',process,action)
 
     def choose_pid(self, index):
         d = self.dialog
@@ -565,12 +566,12 @@ class App:
         if d is None: return
         if d.kind == 'edit':
             if not d.text.strip():
-                self.message = 'Comando vazio'
+                self.message = 'Command is empty'
                 return
             try:
                 argv = core.command_argv(d.text,d.target.shell)
                 self.dialog = None
-                self.run_tool(argv,d.cwd,'Comando')
+                self.run_tool(argv,d.cwd,'Command')
             except (OSError, core.SourceError) as exc:
                 self.dialog = None
                 self.message = core.error_text(exc)
@@ -580,14 +581,14 @@ class App:
         self.dialog = None
         self.action_pending = True
         view = self.view
-        self.message = 'Executando operação…'
+        self.message = 'Running operation…'
         def worker():
             try:
                 if d.action in ('term','kill'):
                     sig = signal.SIGTERM if d.action == 'term' else signal.SIGKILL
-                    result = self.backend.signal_process(d.target,sig) or f'{signal.Signals(sig).name} enviado ao PID {d.target.pid}'
+                    result = self.backend.signal_process(d.target,sig) or f'{signal.Signals(sig).name} sent to PID {d.target.pid}'
                 else:
-                    result = self.backend.service_action(d.target,d.action) or f'Operação {d.action} aceita; atualizando estado'
+                    result = self.backend.service_action(d.target,d.action) or f'Operation {d.action} accepted; refreshing state'
             except Exception as exc:
                 result = core.error_text(exc)
             self.results.put(('action',view,result))
@@ -596,7 +597,7 @@ class App:
     def launch_lazydocker(self):
         executable = shutil.which('lazydocker')
         if not executable:
-            self.message = 'Lazydocker não encontrado no PATH'
+            self.message = 'Lazydocker not found in PATH'
             return
         self.run_tool([executable],os.getcwd(),'Lazydocker')
 
@@ -604,7 +605,7 @@ class App:
         self.external_active = True
         try:
             code = self.runner(argv,cwd)
-            self.message = f'{label} terminou · código de saída {code}'
+            self.message = f'{label} finished · exit code {code}'
         except (OSError, core.SourceError) as exc:
             self.message = f'{label}: {core.error_text(exc)}'
         finally:
@@ -621,8 +622,8 @@ class App:
         try:
             code = subprocess.run(argv,cwd=cwd).returncode
             if len(argv) > 1 and argv[1] == '-c':
-                print(f'\nComando terminou · código de saída {code}')
-                try: input('Pressione Enter para voltar ao WSLazy…')
+                print(f'\nCommand finished · exit code {code}')
+                try: input('Press Enter to return to WSLazy…')
                 except EOFError: pass
             return code
         finally:

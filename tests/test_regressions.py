@@ -31,7 +31,7 @@ class Regressions(unittest.TestCase):
             app.tick(now=app.collect_started[0]+5)
             app.render()
             self.assertIn('/proc',app.snapshots[0].error)
-            self.assertIn('5 segundos',app.snapshots[0].error)
+            self.assertIn('5 seconds',app.snapshots[0].error)
             app.key('\t'); self.assertEqual(app.view,1)
             app.key('q'); self.assertFalse(app.running)
         finally:
@@ -47,7 +47,7 @@ class Regressions(unittest.TestCase):
         app=App(Screen(),backend=Backend())
         app.set_snapshot(0,core.make_snapshot(0,[process()]))
         app.action('term'); app.render()
-        button=next(r for r in app.regions if r.label=='Confirmar')
+        button=next(r for r in app.regions if r.label=='Confirm')
         app.mouse(button.x,button.y,curses.BUTTON1_CLICKED)
         app.mouse(button.x,button.y,curses.BUTTON1_CLICKED)
         from tests.test_acceptance import settle
@@ -82,10 +82,10 @@ class Regressions(unittest.TestCase):
                 read_until(b'WSLazy')
                 # The toolbar button starts at x=83 (zero based), y=1.
                 os.write(master,b'\x1b[<0;85;2M\x1b[<0;85;2m')
-                read_until('código de saída 9'.encode())
+                read_until('exit code 9'.encode())
                 self.assertEqual(marker.read_text(),'True')
                 os.write(master,b'\x1b[<0;105;2M\x1b[<0;105;2m')
-                read_until(b'Atalhos e ajuda')
+                read_until(b'Shortcuts and help')
                 os.write(master,b'\x1b'); time.sleep(.08)
                 os.write(master,b'q')
                 self.assertEqual(proc.wait(timeout=3),0)

@@ -80,7 +80,7 @@ class Snapshot:
 
 
 def error_text(exc):
-    return 'Permissão negada' if isinstance(exc, PermissionError) else str(exc)
+    return 'Permission denied' if isinstance(exc, PermissionError) else str(exc)
 
 
 def stat_fields(path):
@@ -150,7 +150,7 @@ def find_process(pid):
     for p in ProcessSampler().sample():
         if p.pid == pid:
             return p
-    raise SourceError('Processo não está mais disponível')
+    raise SourceError('Process is no longer available')
 
 
 def group_apps(processes):
@@ -168,15 +168,15 @@ def run_capture(argv, timeout=5):
         result = subprocess.run(argv, capture_output=True, text=True, errors='replace',
                                 timeout=timeout, env={**os.environ, 'LC_ALL': 'C'}, stdin=subprocess.DEVNULL)
     except FileNotFoundError as exc:
-        raise SourceError(f'{argv[0]}: não encontrado') from exc
+        raise SourceError(f'{argv[0]}: not found') from exc
     except subprocess.TimeoutExpired as exc:
-        raise SourceError(f'{argv[0]}: limite de {timeout} segundos; estado final não confirmado') from exc
+        raise SourceError(f'{argv[0]}: timed out after {timeout} seconds; final state not confirmed') from exc
     except OSError as exc:
         raise SourceError(f'{argv[0]}: {error_text(exc)}') from exc
     if result.returncode:
-        message = (result.stderr or result.stdout).strip() or f'código {result.returncode}'
+        message = (result.stderr or result.stdout).strip() or f'code {result.returncode}'
         if 'denied' in message.lower() or 'authentication' in message.lower():
-            message = f'Permissão negada: {message}'
+            message = f'Permission denied: {message}'
         raise SourceError(f'{argv[0]}: {message}')
     return result.stdout
 
@@ -198,8 +198,8 @@ def list_ports():
 
 def list_services():
     result, errors = [], []
-    for scope in ('sistema', 'usuário'):
-        argv = ['systemctl', *( ['--user'] if scope == 'usuário' else []),
+    for scope in ('system', 'user'):
+        argv = ['systemctl', *( ['--user'] if scope == 'user' else []),
                 'list-units', '--type=service', '--all', '--plain', '--no-pager', '--no-legend']
         try:
             output = run_capture(argv)
@@ -281,40 +281,40 @@ def read_history(home=None, histfile=None):
 
 def signal_process(process, sig):
     if sig not in (signal.SIGTERM, signal.SIGKILL):
-        raise SourceError('Sinal inválido')
+        raise SourceError('Invalid signal')
     # pidfd pins the process so a recycle between verification and signal cannot
     # redirect the operation. Refuse on older kernels instead of a racy kill(pid).
     if not hasattr(os, 'pidfd_open') or not hasattr(signal, 'pidfd_send_signal'):
-        raise SourceError('Encerramento seguro exige suporte a pidfd neste Python/kernel')
+        raise SourceError('Safe termination requires pidfd support in this Python/kernel')
     try:
         fd = os.pidfd_open(process.pid)
         try:
             if process_start(process.pid) != process.start:
-                raise SourceError('Processo não está mais disponível')
+                raise SourceError('Process is no longer available')
             signal.pidfd_send_signal(fd, sig)
         finally:
             os.close(fd)
     except (ProcessLookupError, FileNotFoundError):
-        raise SourceError('Processo não está mais disponível') from None
+        raise SourceError('Process is no longer available') from None
     except PermissionError:
-        raise SourceError('Permissão negada') from None
-    return f'{signal.Signals(sig).name} enviado ao PID {process.pid}'
+        raise SourceError('Permission denied') from None
+    return f'{signal.Signals(sig).name} sent to PID {process.pid}'
 
 
 def service_action(service, action):
-    verbs = {'iniciar': 'start', 'parar': 'stop', 'reiniciar': 'restart'}
-    argv = ['systemctl', '--no-ask-password', *( ['--user'] if service.scope == 'usuário' else []),
+    verbs = {'start': 'start', 'stop': 'stop', 'restart': 'restart'}
+    argv = ['systemctl', '--no-ask-password', *( ['--user'] if service.scope == 'user' else []),
             verbs[action], '--', service.name]
     run_capture(argv, timeout=10)
-    return f'Operação {action} aceita para {service.name}; atualizando estado'
+    return f'Operation {action} accepted for {service.name}; refreshing state'
 
 
 def command_argv(command, shell):
     if shell not in ('bash', 'zsh'):
-        raise SourceError(f'Shell {shell} não suportado')
+        raise SourceError(f'Shell {shell} not supported')
     executable = shutil.which(shell)
     if not executable:
-        raise SourceError(f'Shell {shell} não encontrado')
+        raise SourceError(f'Shell {shell} not found')
     return [executable, '-c', command]
 
 
@@ -335,8 +335,8 @@ def percent(value):
 
 
 def process_details(p):
-    return (f'PID: {p.pid}\nUsuário: {p.user} (UID {p.uid})\nEstado: {p.state}\n'
-            f'CPU: {percent(p.cpu)}\nMemória: {human_memory(p.memory)}\nInício (ticks): {p.start}\n\nComando:\n{p.command}')
+    return (f'PID: {p.pid}\nUser: {p.user} (UID {p.uid})\nState: {p.state}\n'
+            f'CPU: {percent(p.cpu)}\nMemory: {human_memory(p.memory)}\nStart (ticks): {p.start}\n\nCommand:\n{p.command}')
 
 
 def make_snapshot(view, objects, error=''):
@@ -346,22 +346,22 @@ def make_snapshot(view, objects, error=''):
             items.append(Item((p.pid, p.start), (str(p.pid), p.user, percent(p.cpu), human_memory(p.memory), p.command), process_details(p), p))
     elif view == 1:
         for a in sorted(objects, key=lambda a: (-(a.cpu or 0), a.name, a.uid)):
-            details = f'{a.name}\nUID: {a.uid}\nProcessos: {len(a.processes)}\nCPU: {percent(a.cpu)}\nMemória: {human_memory(a.memory)}\n\n'
+            details = f'{a.name}\nUID: {a.uid}\nProcesses: {len(a.processes)}\nCPU: {percent(a.cpu)}\nMemory: {human_memory(a.memory)}\n\n'
             details += '\n\n'.join(process_details(p) for p in a.processes)
             items.append(Item((a.name, a.uid), (a.name, str(a.uid), str(len(a.processes)), percent(a.cpu), human_memory(a.memory)), details, a))
     elif view == 2:
         for p in sorted(objects, key=lambda p: (p.port, p.protocol, p.address)):
-            owners = ', '.join(f'{name} (PID {pid})' for name, pid in p.owners) or 'proprietário indisponível'
+            owners = ', '.join(f'{name} (PID {pid})' for name, pid in p.owners) or 'owner unavailable'
             items.append(Item((p.protocol, p.address, p.port), (p.protocol.upper(), str(p.port), p.address, owners),
                               f'{p.protocol.upper()} {p.address}:{p.port}\n\n{owners}', p))
     elif view == 3:
         for s in sorted(objects, key=lambda s: (s.scope, s.name)):
             items.append(Item((s.scope, s.name), (s.name, s.scope, s.state, s.description),
-                              f'Unidade: {s.name}\nEscopo: {s.scope}\nEstado: {s.state}\n\n{s.description}', s))
+                              f'Unit: {s.name}\nScope: {s.scope}\nState: {s.state}\n\n{s.description}', s))
     else:
         for e in sorted(objects, key=lambda e: (-e.position, e.source)):
             items.append(Item((e.source, e.command), (e.shell, e.command.replace('\n', ' ↵ ')),
-                              f'Shell: {e.shell}\nOrigem: {e.source}\n\n{e.command}', e))
+                              f'Shell: {e.shell}\nSource: {e.source}\n\n{e.command}', e))
     return Snapshot(items, error)
 
 

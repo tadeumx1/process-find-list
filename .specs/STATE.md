@@ -4,16 +4,18 @@
 
 | ID | Status | Decision | Reason |
 | --- | --- | --- | --- |
-| AD-001 | active | Python >=3.10, curses, Linux /proc, comando wslazy; sem dependências externas de runtime | Porta 1 do plano aprovado; execução direta no WSL existente. |
-| AD-002 | active | Perfil light da tlc-spec-lean | Padrão registrado no plano aprovado; verificador independente, sem injeção de falhas. |
+| AD-001 | active | Python >=3.10, curses, Linux /proc, wslazy command; no third-party runtime dependencies | Original approved architecture and direct execution in WSL. |
+| AD-002 | active | tlc-spec-lean light profile | Independent verification with located evidence, without fault injection. |
+| AD-003 | active | English application-authored UI, source code and user documentation | Explicit user language revision supersedes the original Portuguese copy. |
+| AD-004 | active | Public GitHub repository with English description | Explicitly authorized by the user in this update. |
 
 ## Handoff
 
-**Feature**: wslazy
-**Where**: concluída; C1–C40 comprovados na rodada 2 independente, HEAD de implementação/testes `e88db7f0b4a6302423ba2f8b90edca51b0c845fa`.
-**Next step**: uso pelo usuário; nenhuma implementação pendente.
-**Blockers**: nenhum.
+**Feature**: english-content
+**Where**: English UI, code, README, CONTRIBUTING.MD, docs/running.md and GitHub description implemented. Public visibility confirmed. All 44 tests and documentation/repository assertion commands pass.
+**Next step**: independent verification of C1–C7, then commit the report and push all changes as requested.
+**Blockers**: none.
 
-Execução: `python3 -m wslazy` ou `.venv/bin/wslazy` (instalado localmente). Testes neste host: `PYTHONPATH=/tmp/wslazy-build-tools python3 -m unittest discover -v`; 44 testes passam. Ferramentas de build estão isoladas em /tmp, sem mudança no Python do sistema. Gate `validate_verification.py` com caminho absoluto da pasta da feature retorna 0.
+Run `python3 -m wslazy`. Host test command: `PYTHONPATH=/tmp/wslazy-build-tools python3 -m unittest discover -v`. Packaging tools are isolated under /tmp. The original WSLazy report remains tied to its verified commit; its Portuguese text is historical.
 
-Limite de validação: perfil light, sem mutações; ações de serviço usam executor simulado; lazydocker é um substituto temporário porque o executável real não está instalado. Coleta de recursos foi executada no WSL real. Mouse, restauração e inicialização instalada foram exercitados em PTY real. UAT humano ainda não realizado.
+Automated validation uses simulated service operations, real disposable processes and shells, and real pseudoterminal tests with a temporary lazydocker executable. Human usability review has not been performed.
