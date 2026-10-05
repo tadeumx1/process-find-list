@@ -14,6 +14,6 @@
 **Next step**: uso pelo usuário; nenhuma implementação pendente.
 **Blockers**: nenhum.
 
-Execução: `python3 -m wslazy` ou `.venv/bin/wslazy` (instalado localmente). Testes neste host: `PYTHONPATH=/tmp/wslazy-build-tools python3 -m unittest discover -v`; 44 testes passam. Ferramentas de build estão isoladas em /tmp, sem mudança no Python do sistema. Gate `validate_verification.py` com caminho absoluto do relatório retorna 0.
+Execução: `python3 -m wslazy` ou `.venv/bin/wslazy` (instalado localmente). Testes neste host: `PYTHONPATH=/tmp/wslazy-build-tools python3 -m unittest discover -v`; 44 testes passam. Ferramentas de build estão isoladas em /tmp, sem mudança no Python do sistema. Gate `validate_verification.py` com caminho absoluto da pasta da feature retorna 0.
 
 Limite de validação: perfil light, sem mutações; ações de serviço usam executor simulado; lazydocker é um substituto temporário porque o executável real não está instalado. Coleta de recursos foi executada no WSL real. Mouse, restauração e inicialização instalada foram exercitados em PTY real. UAT humano ainda não realizado.
